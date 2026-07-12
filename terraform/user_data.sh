@@ -39,6 +39,56 @@ cp "$DOCKER_CONFIG/cli-plugins/docker-compose" /root/.docker/cli-plugins/docker-
 # --- Project dir ---
 install -d -o ec2-user -g ec2-user -m 0755 /opt/outreach
 
+# --- Chroma persistent volume ----------------------------------------------
+# Terraform attaches a dedicated EBS volume as /dev/sdf. Nitro instances expose
+# EBS volumes as /dev/nvme*n1, and the attachment can complete after cloud-init
+# has started. Wait for the volume by ID, create a filesystem only if it is new,
+# then mount it at the host path used by docker-compose.yml.
+
+CHROMA_VOLUME_ID="${chroma_volume_id}"
+CHROMA_MOUNT="/data/outreach/chroma"
+install -d -m 0755 "$CHROMA_MOUNT"
+
+find_chroma_device() {
+    local serial="$${CHROMA_VOLUME_ID//-/}"
+    for dev in "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$serial" \
+               "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$CHROMA_VOLUME_ID" \
+               /dev/xvdf /dev/sdf; do
+        if [ -e "$dev" ]; then
+            readlink -f "$dev"
+            return 0
+        fi
+    done
+    return 1
+}
+
+CHROMA_DEVICE=""
+for attempt in $(seq 1 60); do
+    if CHROMA_DEVICE="$(find_chroma_device)"; then
+        echo "found Chroma EBS device $CHROMA_DEVICE on attempt $attempt"
+        break
+    fi
+    echo "waiting for Chroma EBS volume $CHROMA_VOLUME_ID (attempt $attempt)"
+    sleep 5
+done
+
+if [ -z "$CHROMA_DEVICE" ]; then
+    echo "ERROR: Chroma EBS volume $CHROMA_VOLUME_ID did not appear" >&2
+    exit 1
+fi
+
+if ! blkid "$CHROMA_DEVICE" >/dev/null 2>&1; then
+    mkfs.ext4 -L outreach-chroma "$CHROMA_DEVICE"
+fi
+
+CHROMA_UUID="$(blkid -s UUID -o value "$CHROMA_DEVICE")"
+if ! grep -q "UUID=$CHROMA_UUID" /etc/fstab; then
+    echo "UUID=$CHROMA_UUID $CHROMA_MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
+fi
+
+mountpoint -q "$CHROMA_MOUNT" || mount "$CHROMA_MOUNT"
+chown -R ec2-user:ec2-user "$CHROMA_MOUNT"
+
 # --- CloudWatch agent -----------------------------------------------------
 # Fetch the agent config from SSM (the terraform put it there) and start
 # the service. Agent pushes memory / disk / swap metrics + docker logs.

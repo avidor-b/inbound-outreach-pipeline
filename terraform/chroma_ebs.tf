@@ -7,8 +7,11 @@
 # instance replacement does not discard the index.
 
 resource "aws_ebs_volume" "chroma" {
-  # Must match the EC2's AZ — EBS is single-AZ.
-  availability_zone = aws_instance.outreach.availability_zone
+  # Must match the EC2's AZ — EBS is single-AZ. The instance is pinned to
+  # private-a in main.tf, so create the volume in the same subnet AZ without
+  # depending on the instance. That lets user_data know the volume ID up front
+  # and wait for Terraform's separate aws_volume_attachment during bootstrap.
+  availability_zone = aws_subnet.private["a"].availability_zone
   size              = 10 # GB; chroma index is a few hundred MB, room to grow
   type              = "gp3"
   encrypted         = true

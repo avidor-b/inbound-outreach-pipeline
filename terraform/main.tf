@@ -137,13 +137,14 @@ resource "aws_instance" "outreach" {
     # initially uses the ALB DNS name and can be refreshed via SSM.
     # Don't pass app_fqdn here — doing so triggers
     # user_data_replace_on_change and recreates the EC2 instance.
-    alb_dns_name = aws_lb.outreach.dns_name
+    alb_dns_name     = aws_lb.outreach.dns_name
+    chroma_volume_id = aws_ebs_volume.chroma.id
   })
   # Don't destroy+recreate on user_data edits. In practice refresh-env.sh
   # changes get applied to the running /opt/outreach/refresh-env.sh
   # out-of-band via SSM, so the desired state is "tracked but not
   # applied until a human decides to cycle the box." An auto-replace
-  # on edit here would wipe container state, chroma's EBS mount, and
+  # on edit here would wipe container state, the local mount table, and
   # whatever is in /opt/outreach every time someone edits the template.
   user_data_replace_on_change = false
 

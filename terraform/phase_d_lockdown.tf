@@ -2,10 +2,6 @@
 # (HTTPS-only), SSH is removed from the public SG, session access
 # goes via SSM Session Manager. Cookie secure flag flips.
 #
-# All of these are toggles controlled by var.production_hardening
-# so Phase B-era direct access can be turned back on quickly if we
-# need to debug.
-#
 # CloudTrail is always on (free tier covers 1 trail at $0).
 
 # --- CloudTrail -----------------------------------------------------------

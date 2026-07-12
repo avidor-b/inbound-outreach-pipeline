@@ -23,7 +23,7 @@ variable "instance_type" {
 }
 
 variable "root_volume_size_gb" {
-  description = "EBS root volume size in GB. Docker images + Chroma index + Postgres data all live here."
+  description = "EBS root volume size in GB. Docker images and host logs live here; Chroma uses its own attached EBS volume and Postgres uses RDS."
   type        = number
   default     = 40
 }
