@@ -4,6 +4,12 @@ Outreach Pipeline is a configurable reference implementation for researching inb
 
 The repository ships with fictional sample data only. It is not a turnkey sales system, a compliance certification, or a substitute for reviewing the privacy, anti-spam, scraping, and consumer-protection rules that apply to your organization.
 
+## Demo
+
+The demo below runs at 2x speed against the synthetic local staging fixtures:
+
+![Outreach Pipeline demo](docs/assets/demo.gif)
+
 ## What is included
 
 - Inbound contact ingestion through a CRM adapter, with a mock adapter for local use
