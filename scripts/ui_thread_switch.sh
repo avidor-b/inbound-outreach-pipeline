@@ -11,7 +11,7 @@
 #   ./scripts/ui_thread_switch.sh                # local staging (default)
 #   BASE_URL=https://<alb> JWT=<token> ./scripts/ui_thread_switch.sh
 #
-# Requires: docker compose -f docker-compose.staging.yml up -d  (or an
+# Requires: docker compose -f docker-compose.staging.yml up -d --build  (or an
 # explicit BASE_URL+JWT pointing at any deployed instance with threads).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -27,7 +27,7 @@ bold()  { printf '\n\033[1m── %s ──\033[0m\n' "$*"; }
 # runs, pass BASE_URL + JWT yourself.
 if [[ -z "${JWT:-}" ]]; then
     if ! curl -sSfo /dev/null http://localhost:8181/health 2>/dev/null; then
-        red "Staging not running. Start it:  docker compose -f docker-compose.staging.yml up -d"
+        red "Staging not running. Start it:  docker compose -f docker-compose.staging.yml up -d --build"
         exit 1
     fi
     bold "Mint JWT for test user"

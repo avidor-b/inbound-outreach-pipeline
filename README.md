@@ -119,6 +119,12 @@ docker compose -f docker-compose.staging.yml up -d --build
 venv/bin/python scripts/seed_staging.py
 ```
 
+After editing `docker-compose.staging.yml` or changing local `.env` values, recreate the dependency containers too so Docker picks up updated healthchecks and environment interpolation:
+
+```bash
+docker compose -f docker-compose.staging.yml up -d --no-build --force-recreate staging-chroma staging-server staging-frontend
+```
+
 Open [http://localhost:3131](http://localhost:3131). The backend health endpoint is [http://localhost:8181/health](http://localhost:8181/health).
 
 The staging compose file uses a mock CRM adapter and synthetic contacts. Email sending remains disabled unless you explicitly configure and enable it.

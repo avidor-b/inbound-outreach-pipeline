@@ -16,7 +16,7 @@ green() { printf '\033[32m%s\033[0m\n' "$*"; }
 bold()  { printf '\n\033[1m── %s ──\033[0m\n' "$*"; }
 
 if ! curl -sSfo /dev/null http://localhost:8181/health 2>/dev/null; then
-    red "Staging not running. Start it:  docker compose -f docker-compose.staging.yml up -d"
+    red "Staging not running. Start it:  docker compose -f docker-compose.staging.yml up -d --build"
     exit 1
 fi
 

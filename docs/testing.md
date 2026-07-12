@@ -49,6 +49,12 @@ venv/bin/python scripts/seed_staging.py
 make test-ui
 ```
 
+If you changed compose healthchecks or local `.env` values, recreate the services plus Chroma explicitly:
+
+```bash
+docker compose -f docker-compose.staging.yml up -d --no-build --force-recreate staging-chroma staging-server staging-frontend
+```
+
 Run the full LLM-backed workflow only after reviewing provider cost and data handling:
 
 ```bash
