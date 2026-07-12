@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "outreach-pipeline": {
+      "command": "python",
+      "args": ["-m", "outreach_pipeline.mcp_server"]
+    }
+  }
+}

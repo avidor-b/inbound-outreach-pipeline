@@ -1,0 +1,205 @@
+# Outreach deployment — single EC2 box, three containers behind an ALB.
+# See docs/cloud-architecture.md.
+#
+# Profiles:
+#   (default)  server + frontend + chroma (the production stack).
+#              Expects DATABASE_URL to point at an external Postgres (RDS).
+#   dev        adds a local postgres container for development so the
+#              full stack can run off a laptop without RDS.
+#
+# Usage on the EC2 box:
+#     docker compose up -d --build
+#
+# Local full-stack dev:
+#     docker compose --profile dev up --build
+#
+# `name:` scopes volumes/networks to this project.
+name: outreach
+
+networks:
+  outreach:
+    driver: bridge
+
+volumes:
+  # Chroma persists to /chroma/chroma and bind-mounts the host's
+  # /data/outreach/chroma directory (EBS, provisioned by chroma_ebs.tf)
+  # in production. The staging compose file uses a named volume instead.
+  # Only populated under the `dev` profile.
+  pgdata:
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # In prod we set SERVER_IMAGE to an ECR-qualified tag
+    # (<account-id>.dkr.ecr.<region>.amazonaws.com/outreach/server:<tag>) so
+    # `docker compose pull` does the work and the EC2 never runs a
+    # local build. In dev the env var stays unset and `--build`
+    # writes to the plain local tag below.
+    image: ${SERVER_IMAGE:-outreach-server:${OUTREACH_VERSION:-local}}
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      AWS_SSM_PATH: ${AWS_SSM_PATH:-/outreach/}
+      # Dev overrides (ignored in production — SSM entrypoint populates
+      # these instead). Respected when ENVIRONMENT=dev.
+      DATABASE_URL: ${DATABASE_URL:-}
+      JWT_SECRET: ${JWT_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_EXTRA_ORIGINS: ${CORS_EXTRA_ORIGINS:-}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      HUBSPOT_TOKEN: ${HUBSPOT_TOKEN:-}
+      # LLM selection. Format: '<provider>:<model>' (e.g. openai:gpt-4.1-mini,
+      # google_genai:gemini-2.5-flash-lite). graph/agent.py picks the
+      # matching langchain integration at import time, so only the chosen
+      # provider's API key below actually needs to be populated.
+      #
+      # Keep this default aligned with the code-level model default and
+      # review latency, cost, and provider requirements before changing it.
+      OUTREACH_MODEL: ${OUTREACH_MODEL:-openai:gpt-4.1-mini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      # Optional organization overrides. Null values are omitted when they are
+      # not set, so config.yaml remains authoritative and production SSM can
+      # populate them at container startup.
+      OUTREACH_ORGANIZATION_NAME:
+      OUTREACH_ORGANIZATION_DESCRIPTION:
+      OUTREACH_PRIMARY_DOMAINS:
+      OUTREACH_RESOURCE_DOMAINS:
+      OUTREACH_RELEVANCE_TERMS:
+      OUTREACH_COMPANY_FIT_GUIDANCE:
+      OUTREACH_PRODUCT_FAMILIES_JSON:
+      # Chroma lives on the internal network — not reachable from outside.
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+      # Web tier
+      PORT: 8000
+      WEB_WORKERS: ${WEB_WORKERS:-2}
+    depends_on:
+      chroma:
+        condition: service_healthy
+    networks:
+      - outreach
+    ports:
+      - "${SERVER_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # First-boot lifespan does pool init + checkpointer.setup() +
+      # store.setup() + graph compilation, typically 15-40s on a
+      # t3.medium. 90s grace period covers cold-start variance so
+      # `depends_on: service_healthy` doesn't skip frontend startup.
+      start_period: 90s
+    logging:
+      driver: ${LOGGING_DRIVER:-json-file}
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Baked into the client bundle. Empty string = same-origin
+        # (relative URLs). The ALB serves frontend and backend on the
+        # same host, so prod deploys leave this empty. Set to a full
+        # URL only when frontend and backend live on different hosts.
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL-http://localhost:8000}
+    image: ${FRONTEND_IMAGE:-outreach-frontend:${OUTREACH_VERSION:-local}}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # Tells the CopilotKit route to use LangGraphHttpAgent (our
+      # FastAPI AG-UI endpoint) instead of LangGraphAgent (the
+      # langgraph dev server at localhost:2024).
+      USE_PRODUCTION_SERVER: "1"
+      # Next.js app-router API routes use these at request time to proxy
+      # to the FastAPI backend over the internal network.
+      BACKEND_URL: http://server:8000
+      AGENT_URL: http://server:8000/copilotkit
+    networks:
+      - outreach
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
+    depends_on:
+      server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: ${LOGGING_DRIVER:-json-file}
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  chroma:
+    # Chroma 1.x is excluded until CVE-2026-45829 has a patched release.
+    image: chromadb/chroma:0.6.3
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/chroma
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      # Host path is provisioned + mounted by terraform (chroma_ebs.tf)
+      # and user_data.sh: a dedicated 10 GB gp3 EBS volume attached to
+      # the instance at /dev/sdf, mounted on the host at
+      # /data/outreach/chroma via /etc/fstab LABEL=outreach-chroma.
+      # Survives EC2 replacement; next fresh host reuses the same
+      # volume and keeps the index.
+      - /data/outreach/chroma:/chroma/chroma
+    networks:
+      - outreach
+    expose:
+      - "8000"
+    healthcheck:
+      # The chromadb image includes Python. Use the stdlib HTTP client
+      # instead of a handcrafted /dev/tcp request; uvicorn returns 400
+      # for the raw request form even when the Chroma heartbeat is healthy.
+      test:
+        - "CMD-SHELL"
+        - "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/v2/heartbeat\", timeout=3).read()' || exit 1"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: ${LOGGING_DRIVER:-json-file}
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- Dev-only profile: spin up Postgres locally so the full stack runs
+  # without an external database. In production, DATABASE_URL points at
+  # RDS and this service is simply not started.
+  postgres:
+    image: pgvector/pgvector:pg16
+    profiles: ["dev"]
+    container_name: outreach-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pipeline
+      POSTGRES_PASSWORD: pipeline
+      POSTGRES_DB: outreach
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - outreach
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pipeline -d outreach"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify release files and clean tracked paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s LICENSE
+          test -s CONTRIBUTING.md
+          test -s SECURITY.md
+
+          unsafe_paths="$({ git ls-files | grep -E '(^|/)(\.env($|\.)|config\.ya?ml$|backend\.hcl$|terraform\.tfvars$|.*\.tfstate($|\.)|.*\.(pem|key|p12|pfx|jks|keystore|db|sqlite|sqlite3|xlsx)$)' || true; } \
+            | grep -Ev '(^|/)\.env\.example$|terraform/terraform\.tfvars\.example$|terraform/backend\.example\.hcl$' || true)"
+          if [[ -n "$unsafe_paths" ]]; then
+            echo "Credential-bearing or runtime-data paths are tracked:" >&2
+            printf '%s\n' "$unsafe_paths" >&2
+            exit 1
+          fi
+
+          git diff --check
+
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: pipeline
+          POSTGRES_PASSWORD: pipeline
+          POSTGRES_DB: outreach_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pipeline -d outreach_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ENVIRONMENT: dev
+      LANGSMITH_TRACING: "false"
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.lock.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock.txt
+          python -m pip install --no-deps .
+
+      - name: Run Python tests
+        run: python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.22.2"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  terraform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.11.4"
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate

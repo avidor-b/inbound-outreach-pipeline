@@ -1,0 +1,92 @@
+# Repo-level Docker ignores — applies to the server image build context.
+# Each frontend build has its own frontend/.dockerignore.
+
+# VCS
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+.venv
+venv
+env
+.python-version
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Frontend — built/installed separately from its own Dockerfile
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/.env.local
+frontend/.env
+frontend/.vercel
+
+# Local dev secrets and environment files
+**/.env
+**/.env.*
+**/config.yaml
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+.logfire
+
+# Local data stores and framework state — rebuilt at runtime
+data
+frontend/data
+rag
+storage
+.langgraph_api
+
+# Terraform is deployment tooling, not application image input. Excluding the
+# whole directory also guarantees that local state and provider caches never
+# reach a Docker daemon or remote builder.
+terraform
+
+# Local agent/browser state
+.agents
+.codex
+.serena
+.playwright
+.playwright-cli
+.claude/settings.local.json
+
+# Test artefacts
+tests
+pytest.ini
+
+# Build + packaging artefacts
+dist
+build
+.next
+*.tsbuildinfo
+
+# Docs and non-runtime tooling
+docs
+PIPELINE_PLAN.html
+README.html
+Pipeline_Overview.pptx
+
+# Large dev-only source inputs not needed inside the image
+# (keep if the materials directory *is* what's shipped — revisit when the
+# Chroma container takes over indexing responsibility)
+resources/hubspot-cms
+resources/crm_exports
+resources/materials/prospects
+
+# Existing entrypoints shipped from scripts/ are dev-only
+scripts

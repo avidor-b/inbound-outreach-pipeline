@@ -1,0 +1,134 @@
+# Baseline config.yaml shipped inside the Outreach server image at
+# /etc/outreach/config.yaml (CONFIG_PATH).
+#
+# Everything here is non-secret — safe to commit and bake into the image.
+# Values that reference ${VAR} are substituted at load time from env vars,
+# which in production come from SSM Parameter Store via the container
+# entrypoint.
+#
+# Operators can override this whole file by mounting a different one over
+# /etc/outreach/config.yaml, or override individual values via env vars.
+
+# --- Required by config.load_config validation ---
+reports_path: "/var/outreach/reports"
+report_timezone: "America/New_York"
+
+# --- External integrations ---
+# hubspot_token is sensitive — sourced from SSM at runtime. Empty string
+# falls through to the "not_configured" state on the /connections endpoint.
+hubspot_token: "${HUBSPOT_TOKEN}"
+
+# --- Email sending ---
+# Off by default. Ops flips this on after validating SMTP creds.
+email_sending_enabled: false
+sending_email: "${SENDING_EMAIL}"
+smtp_server: "${SMTP_SERVER}"
+smtp_port: 587
+smtp_token_id: "${SMTP_TOKEN_ID}"
+smtp_token_password: "${SMTP_TOKEN_PASSWORD}"
+
+# --- Organization profile ---
+# Replace this fictional profile in a deployment-specific config file, or use
+# the OUTREACH_* environment overrides documented in .env.example.
+organization:
+  name: "Example Company"
+  description: "a provider of wireless transport and private-network infrastructure"
+  primary_domains:
+    - "example.com"
+  resource_domains:
+    - "example.com"
+  product_families:
+    mesh_radio:
+      display_name: "mesh radio"
+      aliases:
+        - "mesh radio"
+        - "mesh node"
+        - "mesh base"
+      patterns:
+        - 'MESH-(?:NODE|BASE)(?:-[A-Z0-9]+)?'
+      url_patterns:
+        - 'mesh[-_]?radio'
+        - 'mesh[-_]?(?:node|base)'
+    microwave_radio:
+      display_name: "microwave radio"
+      aliases:
+        - "microwave radio"
+        - "RADIO-A"
+      patterns:
+        - 'RADIO-A[A-Z0-9-]*'
+      url_patterns:
+        - 'radio[-_]?a'
+        - 'microwave[-_]?radio'
+    millimeter_wave_radio:
+      display_name: "millimeter-wave radio"
+      aliases:
+        - "millimeter-wave radio"
+        - "mmWave radio"
+        - "RADIO-B"
+      patterns:
+        - 'RADIO-B[A-Z0-9-]*'
+      url_patterns:
+        - 'radio[-_]?b'
+        - 'millimeter[-_]?wave[-_]?radio'
+    point_to_point_radio:
+      display_name: "point-to-point radio"
+      aliases:
+        - "point-to-point radio"
+        - "point to point radio"
+        - "PtP radio"
+        - "RADIO-C"
+      patterns:
+        - 'RADIO-C[A-Z0-9-]*'
+      url_patterns:
+        - 'radio[-_]?c'
+        - 'point[-_]?to[-_]?point[-_]?radio'
+    split_mount_radio:
+      display_name: "split-mount radio"
+      aliases:
+        - "split-mount radio"
+        - "split mount radio"
+        - "RADIO-D"
+      patterns:
+        - 'RADIO-D[A-Z0-9-]*'
+      url_patterns:
+        - 'radio[-_]?d'
+        - 'split[-_]?mount[-_]?radio'
+    outdoor_radio:
+      display_name: "outdoor radio"
+      aliases:
+        - "outdoor radio"
+        - "all-outdoor radio"
+        - "RADIO-F"
+      patterns:
+        - 'RADIO-F[A-Z0-9-]*'
+      url_patterns:
+        - 'radio[-_]?f'
+        - '(?:all[-_]?)?outdoor[-_]?radio'
+  relevance_terms:
+    - "wireless"
+    - "microwave"
+    - "mmwave"
+    - "backhaul"
+    - "fronthaul"
+    - "private network"
+    - "radio"
+    - "spectrum"
+    - "telecom"
+    - "connectivity"
+  company_fit_guidance: >-
+    Prioritize organizations that operate distributed, carrier-grade, public
+    safety, utility, industrial, or mission-critical networks. Score unrelated
+    consumer and non-technical organizations low unless the stated use case
+    clearly requires private wireless connectivity.
+
+# --- Pipeline tuning knobs ---
+rate_limit_per_10s: 90
+safety_mode: true
+rag_top_k: 8
+rag_chunk_size: 1000
+rag_chunk_overlap: 200
+
+# --- LLM provider ---
+# Concrete keys live in env (OPENAI_API_KEY etc.); this just picks the
+# provider. 'openai' is the default.
+llm_provider: "openai"

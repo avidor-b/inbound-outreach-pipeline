@@ -1,0 +1,93 @@
+# Python environments, caches, and build output
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+.coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+htmlcov/
+.python-version
+.venv/
+venv/
+env/
+
+# JavaScript dependencies and build output
+**/node_modules/
+frontend/.next/
+frontend/out/
+frontend/tsconfig.tsbuildinfo
+/.next/
+
+# Secrets and operator-specific configuration. Example files remain tracked.
+**/.env
+**/.env.*
+!**/.env.example
+config.yaml
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.logfire/
+
+# Terraform state, plans, providers, and per-account configuration
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/backend.hcl
+terraform/backend.*.hcl
+!terraform/backend.example.hcl
+terraform/*.tfplan
+terraform/*.plan
+terraform/crash.*.log
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
+# Runtime/customer data. Only an intentionally authored README may be tracked.
+/data/**
+!/data/README.md
+/frontend/data/
+/resources/hubspot-cms/
+/resources/crm_exports/
+/resources/materials/prospects/
+/rag/
+/storage/
+/.langgraph_api/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.xlsx
+
+# Local agent, browser, and editor state
+/.agents/
+/.codex
+/.serena/
+/.playwright/
+/.playwright-cli/
+/.claude/settings.local.json
+/.claude/skills/playwright-cli/
+/frontend/.claude/
+/frontend/.agents/
+/frontend/skills-lock.json
+.vscode/
+.idea/
+
+# Logs and generated documentation/assets
+*.log
+PIPELINE_PLAN.html
+README.html
+Pipeline_Overview.pptx
+
+# OS metadata
+.DS_Store
+Thumbs.db

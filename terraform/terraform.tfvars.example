@@ -1,0 +1,19 @@
+# Copy this file to terraform.tfvars and set values for your own AWS account.
+# terraform.tfvars is ignored because it may contain organization-specific
+# identifiers. Do not add secrets; application secrets belong in SSM.
+
+# --- Required ------------------------------------------------------------
+
+alert_email = "you@example.com"
+domain_root = "example.com"
+
+# --- Optional (sensible defaults) ---------------------------------------
+
+# aws_region          = "us-east-1"
+# project             = "outreach"
+# environment         = "v0"
+# app_subdomain       = "app"
+# instance_type       = "t3.medium"
+# root_volume_size_gb = 40
+# server_host_port    = 8080
+# frontend_host_port  = 3001

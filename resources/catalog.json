@@ -1,0 +1,30 @@
+[
+  {
+    "id": "sample-radio-a-overview",
+    "title": "RADIO-A Outdoor Link Overview",
+    "url": "https://docs.example.com/products/radio-a",
+    "asset_type": "product-page",
+    "summary": "Fictional overview for a sample outdoor point-to-point link.",
+    "tags": [
+      "fictional",
+      "outdoor radio",
+      "point to point",
+      "network planning"
+    ],
+    "score": 80
+  },
+  {
+    "id": "sample-community-network-guide",
+    "title": "Community Network Planning Guide",
+    "url": "https://docs.example.com/guides/community-network",
+    "asset_type": "solution-brief",
+    "summary": "Fictional checklist for planning a small community connectivity project.",
+    "tags": [
+      "fictional",
+      "community network",
+      "planning",
+      "connectivity"
+    ],
+    "score": 75
+  }
+]

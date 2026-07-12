@@ -1,0 +1,9 @@
+{
+  "python_version": "3.11",
+  "dependencies": ["."],
+  "package_manager": "pip",
+  "graphs": {
+    "outreach": "./src/outreach_pipeline/graph/__init__.py:graph"
+  },
+  "env": "./.env"
+}

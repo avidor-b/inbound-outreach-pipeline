@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "outreach-pipeline"
+version = "0.1.0"
+description = "MQL outreach pipeline — fetch, enrich, score, draft, send, monitor"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "httpx>=0.28",
+    "openpyxl",
+    "pyyaml",
+    "pytz",
+    # Chroma 1.x is excluded until CVE-2026-45829 has a patched release.
+    "chromadb>=0.6.3,<1.0",
+    "crawlee[beautifulsoup,playwright]",
+    "beautifulsoup4",
+    "trafilatura",
+    "lxml_html_clean",
+    "pydantic>=2.0",
+    "pydantic-ai",
+    "pydantic-ai-slim[bedrock]",
+    "mcp",
+    "fastapi",
+    "starlette>=0.40",
+    "uvicorn",
+    "gunicorn>=23.0",
+    "authlib>=1.3",
+    "pyjwt>=2.12",
+    "ddgs",
+    # LangGraph + CopilotKit
+    "langchain>=1.2.0",
+    "langchain-core>=1.2.0",
+    "langchain-openai>=0.3",
+    "langgraph>=1.0.5",
+    "langgraph-checkpoint-postgres>=3.0",
+    "psycopg[binary]>=3.2",
+    "ag-ui-langgraph>=0.0.33",
+    "ag-ui-protocol>=0.1.16",
+    "langchain-google-genai",
+    "langsmith>=0.4.49",
+    # Runtime essentials that were previously implicit (installed
+    # separately in local venvs but missing from the package metadata,
+    # so cloud image builds failed on import).
+    "asyncpg>=0.29",
+    "boto3>=1.34",
+    "python-dotenv>=1.0",
+    "email-validator>=2.0",
+    "bcrypt>=4.0",
+    "langchain-text-splitters>=0.3",
+    "langdetect>=1.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
+# The LangGraph development server is Elastic-2.0 licensed (non-OSI). It is
+# optional and intentionally excluded from the core/runtime dependency set.
+langgraph-dev = [
+    "langgraph-cli[inmem]>=0.4.11",
+    "langgraph-api>=0.7.70",
+]
+
+[project.scripts]
+fetch-mqls = "outreach_pipeline.fetch_mqls:main"
+enrich-mqls = "outreach_pipeline.enrich_mqls:main"
+draft-email = "outreach_pipeline.draft_emails:main"
+send-email = "outreach_pipeline.send_email:main"
+monitor-replies = "outreach_pipeline.monitor_replies:main"
+export-pipeline = "outreach_pipeline.export_pipeline:main"
+scrape-site = "outreach_pipeline.scrape_site:main"
+index-materials = "outreach_pipeline.index_materials:main"
+query-rag = "outreach_pipeline.query_rag:main"
+guardrails = "outreach_pipeline.guardrails:main"
+pipeline-db = "outreach_pipeline.pipeline_db:main"
+run-pipeline = "outreach_pipeline.run_pipeline:main"
+pipeline-mcp = "outreach_pipeline.mcp_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

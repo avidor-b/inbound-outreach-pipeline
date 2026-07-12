@@ -1,0 +1,29 @@
+# Local state — contains resource IDs and secret material in plaintext.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+
+# Generated credentials — never commit.
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Per-account inputs and backend configuration. Only examples are public.
+*.tfvars
+!*.tfvars.example
+backend.hcl
+backend.*.hcl
+!backend.example.hcl
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plan files — contain resolved resource state, possibly sensitive.
+*.tfplan
+*.plan

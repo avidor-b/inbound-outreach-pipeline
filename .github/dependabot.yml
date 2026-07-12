@@ -1,0 +1,73 @@
+# Weekly dependency PRs with grouping so we don't drown in noise.
+# Security advisories come through regardless of schedule.
+version: 2
+updates:
+  # Python requirements.lock.txt
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      langchain-ecosystem:
+        patterns:
+          - "langchain*"
+          - "langgraph*"
+          - "langsmith*"
+          - "copilotkit*"
+          - "ag-ui-*"
+      aws:
+        patterns:
+          - "boto*"
+      fastapi-ecosystem:
+        patterns:
+          - "fastapi*"
+          - "starlette*"
+          - "uvicorn*"
+          - "pydantic*"
+
+  # npm — frontend/package-lock.json
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      copilotkit:
+        patterns:
+          - "@copilotkit/*"
+          - "@ag-ui/*"
+      next:
+        patterns:
+          - "next"
+          - "@next/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+
+  # GitHub Actions workflow pins
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+
+  # Terraform provider pins (versions.tf)
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3

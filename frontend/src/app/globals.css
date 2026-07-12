@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "@copilotkit/react-core/v2/styles.css";
+
+@theme {
+  --color-primary: #0047FF;
+  --color-primary-light: #DDE1FF;
+  --color-bg: #FBFBFC;
+  --color-surface: #F6F2F7;
+  --color-surface-high: #EAE7EB;
+  --color-surface-highest: #E4E1E6;
+  --color-border: #C4C5DA;
+  --color-text: #1B1B1E;
+  /* Darkened from #747688 → #5F6175 for ~6:1 contrast on --color-bg
+     so muted captions comfortably meet WCAG AA for normal text. */
+  --color-text-muted: #5F6175;
+  /* Darkened from #A1A1AA → #6B6B72 for ~5.5:1 contrast so "faint"
+     meta lines (IDs, timestamps, sub-lines) still pass AA. */
+  --color-text-faint: #6B6B72;
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Space Grotesk", monospace;
+  --font-label: "Space Grotesk", sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.glass-input {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.85);
+}

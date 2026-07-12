@@ -1,0 +1,11 @@
+# RADIO-A Outdoor Link Overview
+
+Source: fictional sample authored for this repository
+Public example URL: https://docs.example.com/products/radio-a
+Document type: product
+
+RADIO-A is a fictional outdoor point-to-point radio used only to demonstrate retrieval. In the sample scenario, it connects two buildings across a clear line of sight and exposes standard Ethernet interfaces.
+
+The fictional planning workflow asks an operator to confirm distance, required throughput, mounting constraints, local spectrum rules, and availability requirements before selecting equipment. No performance figures, certifications, prices, customers, or deployment claims are implied.
+
+This document is not a real datasheet and must not be used to design, purchase, market, or operate equipment.

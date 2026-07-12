@@ -1,0 +1,138 @@
+# Local STAGING stack — isolated from dev servers.
+#
+# Purpose: give Claude (and the dev) a stable, reproducible environment
+# for regression tests. Same images as production, separate ports,
+# separate volumes, separate network. Safe to run alongside
+# `langgraph dev` and `npm run dev`.
+#
+# Usage:
+#     docker compose -f docker-compose.staging.yml up -d --build
+#     curl http://localhost:8181/health      # backend
+#     open  http://localhost:3131/           # frontend
+#
+# One-command seed:
+#     python scripts/seed_staging.py         # idempotent fixtures
+#
+# Ports:
+#   Postgres : 5533  (pgvector/pgvector:pg16)
+#   Chroma   : 8800  (internal-only exposure)
+#   Server   : 8181  (FastAPI + LangGraph)
+#   Frontend : 3131  (Next.js standalone)
+name: outreach-staging
+
+networks:
+  staging:
+    driver: bridge
+
+volumes:
+  staging-pgdata:
+  staging-chroma:
+
+services:
+  staging-postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pipeline
+      POSTGRES_PASSWORD: pipeline
+      POSTGRES_DB: outreach
+    ports:
+      - "127.0.0.1:${STAGING_POSTGRES_PORT:-5533}:5432"
+    volumes:
+      - staging-pgdata:/var/lib/postgresql/data
+    networks: [staging]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pipeline -d outreach"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  staging-chroma:
+    # Chroma 1.x is excluded until CVE-2026-45829 has a patched release.
+    image: chromadb/chroma:0.6.3
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/chroma
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - staging-chroma:/chroma/chroma
+    networks: [staging]
+    expose: ["8000"]
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/v2/heartbeat\", timeout=3).read()' || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  staging-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: outreach-server:staging
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: dev
+      DATABASE_URL: postgresql://pipeline:pipeline@staging-postgres:5432/outreach
+      # Fixed for reproducibility — never used in prod, never leaves
+      # the machine. Pre-commit mints JWTs with this.
+      JWT_SECRET: ${STAGING_JWT_SECRET:-staging-only-insecure-key-change-me}
+      COOKIE_SECURE: "false"
+      FRONTEND_URL: http://localhost:3131
+      OUTREACH_MODEL: ${OUTREACH_MODEL:-openai:gpt-4.1-mini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      HUBSPOT_TOKEN: ${HUBSPOT_TOKEN:-}
+      # Mock HubSpot in staging so `ingest_contacts` returns a set
+      # of fixture MQLs without needing a real token. Set to "0"
+      # if you ever want to point staging at real HubSpot instead.
+      OUTREACH_MOCK_HUBSPOT: "1"
+      LANGSMITH_TRACING: "false"
+      CHROMA_HOST: staging-chroma
+      CHROMA_PORT: 8000
+      PORT: 8000
+      WEB_WORKERS: 2
+      ALLOWED_EMAILS: test@example.com
+    depends_on:
+      staging-postgres:
+        condition: service_healthy
+      staging-chroma:
+        condition: service_healthy
+    networks: [staging]
+    ports:
+      - "127.0.0.1:${STAGING_SERVER_PORT:-8181}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  staging-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:8181
+    image: outreach-frontend:staging
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      USE_PRODUCTION_SERVER: "1"
+      BACKEND_URL: http://staging-server:8000
+      AGENT_URL: http://staging-server:8000/copilotkit
+    networks: [staging]
+    ports:
+      - "127.0.0.1:${STAGING_FRONTEND_PORT:-3131}:3000"
+    depends_on:
+      staging-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

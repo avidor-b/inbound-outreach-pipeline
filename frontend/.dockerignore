@@ -1,0 +1,27 @@
+# Frontend build context ignores.
+
+node_modules
+.next
+out
+.vercel
+
+# Env files — values are injected at build time via docker compose build args
+.env
+.env.local
+.env.development
+.env.production
+
+# VCS + editor
+.git
+.vscode
+.idea
+.DS_Store
+
+# Test / coverage
+coverage
+.nyc_output
+__tests__
+
+# Misc
+*.log
+*.tsbuildinfo
