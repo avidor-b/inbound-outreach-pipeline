@@ -17,7 +17,7 @@
 # ---------- Builder ----------
 # Base image pinned to a specific patch release — bumping the tag is an
 # explicit, auditable change. Do not revert to the floating `3.11-slim`.
-FROM python:3.11.15-slim-bookworm AS builder
+FROM python:3.14.6-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -51,7 +51,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 
 # ---------- Runtime ----------
-FROM python:3.11.15-slim-bookworm AS runtime
+FROM python:3.14.6-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
