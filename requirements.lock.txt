@@ -457,7 +457,7 @@ opentelemetry-sdk==1.42.1
     #   logfire
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-semantic-conventions==0.63b1
+opentelemetry-semantic-conventions==0.64b0
     # via
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
