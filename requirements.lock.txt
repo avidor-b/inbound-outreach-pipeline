@@ -308,7 +308,7 @@ keyring==25.7.0
     # via py-key-value-aio
 kubernetes==36.0.2
     # via chromadb
-langchain==1.3.13
+langchain==1.3.14
     # via
     #   outreach-pipeline (pyproject.toml)
     #   ag-ui-langgraph
@@ -352,7 +352,7 @@ langgraph-prebuilt==1.1.0
     # via langgraph
 langgraph-sdk==0.4.2
     # via langgraph
-langsmith==0.10.2
+langsmith==0.10.8
     # via
     #   outreach-pipeline (pyproject.toml)
     #   langchain-core
