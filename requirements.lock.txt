@@ -308,11 +308,11 @@ keyring==25.7.0
     # via py-key-value-aio
 kubernetes==36.0.2
     # via chromadb
-langchain==1.3.13
+langchain==1.3.14
     # via
     #   outreach-pipeline (pyproject.toml)
     #   ag-ui-langgraph
-langchain-core==1.4.9
+langchain-core==1.5.3
     # via
     #   outreach-pipeline (pyproject.toml)
     #   ag-ui-langgraph
@@ -324,9 +324,9 @@ langchain-core==1.4.9
     #   langgraph-checkpoint
     #   langgraph-prebuilt
     #   langgraph-sdk
-langchain-google-genai==4.2.7
+langchain-google-genai==4.3.2
     # via outreach-pipeline (pyproject.toml)
-langchain-openai==1.3.5
+langchain-openai==1.4.1
     # via outreach-pipeline (pyproject.toml)
 langchain-protocol==0.0.18
     # via
@@ -336,7 +336,7 @@ langchain-text-splitters==1.1.2
     # via outreach-pipeline (pyproject.toml)
 langdetect==1.0.9
     # via outreach-pipeline (pyproject.toml)
-langgraph==1.2.9
+langgraph==1.2.10
     # via
     #   outreach-pipeline (pyproject.toml)
     #   ag-ui-langgraph
@@ -346,13 +346,13 @@ langgraph-checkpoint==4.1.1
     #   langgraph
     #   langgraph-checkpoint-postgres
     #   langgraph-prebuilt
-langgraph-checkpoint-postgres==3.1.0
+langgraph-checkpoint-postgres==3.1.1
     # via outreach-pipeline (pyproject.toml)
 langgraph-prebuilt==1.1.0
     # via langgraph
 langgraph-sdk==0.4.2
     # via langgraph
-langsmith==0.10.2
+langsmith==0.10.15
     # via
     #   outreach-pipeline (pyproject.toml)
     #   langchain-core
