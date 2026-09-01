@@ -15,7 +15,7 @@
 #   runtime distroless-ish node image copying just the standalone bundle
 
 # ---------- deps ----------
-FROM node:22.22.2-alpine AS deps
+FROM node:26.8.1-alpine AS deps
 WORKDIR /app
 # scripts/ contains the postinstall patch-ag-ui.js runner; it must be
 # present before npm ci or the postinstall hook fails "MODULE_NOT_FOUND".
@@ -24,7 +24,7 @@ COPY scripts ./scripts
 RUN npm ci
 
 # ---------- builder ----------
-FROM node:22.22.2-alpine AS builder
+FROM node:26.8.1-alpine AS builder
 WORKDIR /app
 
 ARG NEXT_PUBLIC_BACKEND_URL="http://localhost:8000"
@@ -38,7 +38,7 @@ COPY . .
 RUN npm run build
 
 # ---------- runtime ----------
-FROM node:22.22.2-alpine AS runtime
+FROM node:26.8.1-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
